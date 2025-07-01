@@ -7,32 +7,12 @@ import ConversationHistory from '../components/ConversationHistory';
 import { useAuth } from '../contexts/HybridAuthContext';
 import { saveChatMessage, getConversationMessages, createConversation } from '../lib/database';
 
-// Types
 interface Message {
   id: string;
   sender: 'user' | 'leo' | 'max';
   content: string;
   timestamp: Date;
 }
-
-interface APIResponse {
-  choices: Array<{
-    message?: {
-      content: string;
-    };
-  }>;
-}
-
-// Constants
-const API_KEYS = {
-  LEO: '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',
-  MAX: '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'
-} as const;
-
-const SYSTEM_PROMPTS = {
-  LEO: "You are Leo, a friendly chatbot having a casual conversation. Keep your responses very short (1-2 sentences max) and natural, like a real person texting. When Max responds, casually acknowledge or react to their messages sometimes. Use a conversational tone, and avoid being too formal or technical.",
-  MAX: "You are Max, a witty chatbot in a casual conversation. Keep your responses extremely brief (1 sentence) and add subtle humor when appropriate. React naturally to what Leo or the user says, like friends chatting. Be casual and avoid long explanations."
-} as const;
 
 const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -101,7 +81,11 @@ const Chat = () => {
     }
   };
 
-  const callGroqAPI = async (prompt: string, apiKey: string, senderName: 'Leo' | 'Max') => {
+  const callGroqAPI = async (prompt: string, apiKey: string, senderName: string) => {
+    const systemPrompt = senderName === 'Leo' 
+      ? "You are Leo, a dedicated AI assistant who gives perfect answers with a touch of fun and engagement in shot answers and when it needed to get long answers it will give. You're intelligent, helpful, and make conversations enjoyable. Keep responses conversational and friendly. When other AIs respond, acknowledge them naturally ( like human ) in the conversation."
+      : "You are Max, a funny and witty AI assistant who delivers perfect answers with humor and lightness , gives answers in 2-3 lines if needed more so he can do it. You add entertainment value while being accurate and helpful. Keep responses conversational and add appropriate humor. When other AIs respond, engage with them naturally like friends would.";
+
     try {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -112,24 +96,23 @@ const Chat = () => {
         body: JSON.stringify({
           model: selectedModel,
           messages: [
-            { role: 'system', content: SYSTEM_PROMPTS[senderName] },
+            { role: 'system', content: systemPrompt },
             { role: 'user', content: prompt }
           ],
-          temperature: 0.9,
-          max_tokens: 100,
+          temperature: 0.7,
+          max_tokens: 500,
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.error?.message || 'Unknown error'}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data: APIResponse = await response.json();
+      const data = await response.json();
       return data.choices[0]?.message?.content || 'Sorry, I could not process that request.';
     } catch (error) {
       console.error(`Error calling Groq API for ${senderName}:`, error);
-      return `Sorry, I'm having trouble connecting right now. Please try again in a moment.`;
+      return `Sorry, I'm having trouble connecting right now. Please try again!`;
     }
   };
 
@@ -171,14 +154,14 @@ const Chat = () => {
     setInput('');
     setIsLoading(true);
 
-    const conversationContext = messages.slice(-4).map(msg => 
+    const conversationContext = messages.slice(-5).map(msg => 
       `${msg.sender === 'user' ? 'User' : msg.sender === 'leo' ? 'Leo' : 'Max'}: ${msg.content}`
-    ).join('\n') + `\nUser: ${userMessage.content}\n\nRemember: Keep your response very short and casual, like a real chat conversation.`;
+    ).join('\n') + `\nUser: ${userMessage.content}`;
 
     try {
       const leoResponse = await callGroqAPI(
         `Here's our conversation so far:\n${conversationContext}\n\nPlease respond as Leo. Keep it conversational and engaging.`,
-        API_KEYS.LEO,
+        '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',
         'Leo'
       );
 
@@ -199,7 +182,7 @@ const Chat = () => {
         
         const maxResponse = await callGroqAPI(
           `Here's our conversation so far:\n${updatedContext}\n\nPlease respond as Max. You can respond to both the user and Leo's message. Keep it funny and engaging while being helpful.`,
-          API_KEYS.MAX,
+          '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',
           'Max'
         );
 
