@@ -9,7 +9,7 @@ const Header = () => {
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
           <img 
-            src="https://i.postimg.cc/BbvHwHmV/Black-White-Modern-Greative-Triangle-Logo-modified-1.png" 
+            src="https://i.postimg.cc/k4tmF32n/Black-White-Modern-Greative-Triangle-Logo-1-2.jpg" 
             alt="Tria Ai Logo" 
             className="w-8 h-8 sm:w-10 sm:h-10"
           />
