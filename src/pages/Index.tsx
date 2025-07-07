@@ -41,8 +41,7 @@ const Index = () => {
           
           <p className="text-base sm:text-lg text-gray-500 mb-12 max-w-3xl mx-auto animate-fade-in delay-700 leading-relaxed px-4">
             Experience dynamic conversations with Leo and Max - two distinct AI personalities that bring intelligence, 
-            humor, and engaging dialogue to every interaction. No signup required, just start chatting!
-          </p>
+            humor, and engaging dialogue to every interaction. ~ At41rv          </p>
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fade-in delay-1000">
             <Link 
