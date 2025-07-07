@@ -148,7 +148,7 @@ const StudyChat = () => {
     try {
       const tutor1Response = await callGroqAPI(
         `Learning context:\n${conversationContext}\n\nPlease provide educational support as Tutor1. Focus on clear explanations and structured learning.`,
-        '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',
+        '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',
         'Tutor1'
       );
 
@@ -167,7 +167,7 @@ const StudyChat = () => {
         
         const tutor2Response = await callGroqAPI(
           `Learning context:\n${updatedContext}\n\nPlease provide additional educational support as Tutor2. You can build on Tutor1's explanation with engaging examples and connections.`,
-          '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',
+          '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',
           'Tutor2'
         );
 
