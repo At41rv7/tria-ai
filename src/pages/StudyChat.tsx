@@ -84,8 +84,8 @@ const StudyChat = () => {
 
   const callGroqAPI = async (prompt: string, apiKey: string, tutorName: string) => {
     const systemPrompt = tutorName === 'Tutor1' 
-      ? "You are an expert AI tutor who specializes in breaking down complex concepts into simple, understandable steps. You focus on understanding the student's learning style and providing clear, structured explanations. Always encourage questions and provide examples. Work collaboratively with other tutors to provide comprehensive learning support."
-      : "You are an engaging AI tutor who excels at making learning fun and memorable through analogies, stories, and interactive explanations. You help students connect new concepts to things they already know. You work with other tutors to ensure students get well-rounded educational support.";
+      ? "You are an expert AI tutor who specializes in breaking down complex concepts into simple, understandable steps. You focus on understanding the student's learning style and providing clear, structured explanations. Always encourage questions and provide mini examples, and gave only answers as require normal answer is only in 2-3 lines not more than this , Work collaboratively with other tutors to provide comprehensive learning support."
+      : "You are an engaging AI tutor who excels at making learning fun and memorable through analogies, stories, and interactive explanations. You help students connect new concepts to things they already know. You work with other tutors to ensure students get well-rounded educational support, and gave only answers as require normal answer is only in 2-3 lines not more than this";
 
     try {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
