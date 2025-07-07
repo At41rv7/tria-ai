@@ -6,6 +6,7 @@ import UserButton from '../components/UserButton';
 import ConversationHistory from '../components/ConversationHistory';
 import { useAuth } from '../contexts/HybridAuthContext';
 import { saveChatMessage, getConversationMessages, createConversation } from '../lib/database';
+import { callSearchAPI, needsLiveInfo, enhancePromptWithSearch } from '../lib/searchAPI';
 
 interface Message {
   id: string;
@@ -159,8 +160,25 @@ const Chat = () => {
     ).join('\n') + `\nUser: ${userMessage.content}`;
 
     try {
+      // Check if the query needs live information
+      let liveInfo = '';
+      if (needsLiveInfo(userMessage.content)) {
+        try {
+          liveInfo = await callSearchAPI(userMessage.content);
+        } catch (error) {
+          console.error('Error getting live info:', error);
+        }
+      }
+
+      const enhancedPrompt = liveInfo 
+        ? enhancePromptWithSearch(
+            `Here's our conversation so far:\n${conversationContext}\n\nPlease respond as Leo. Keep it conversational and engaging.`,
+            `Live information context: ${liveInfo}`
+          )
+        : `Here's our conversation so far:\n${conversationContext}\n\nPlease respond as Leo. Keep it conversational and engaging.`;
+
       const leoResponse = await callGroqAPI(
-        `Here's our conversation so far:\n${conversationContext}\n\nPlease respond as Leo. Keep it conversational and engaging.`,
+        enhancedPrompt,
         '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',
         'Leo'
       );
@@ -180,8 +198,15 @@ const Chat = () => {
       setTimeout(async () => {
         const updatedContext = conversationContext + `\nLeo: ${leoResponse}`;
         
+        const maxEnhancedPrompt = liveInfo 
+          ? enhancePromptWithSearch(
+              `Here's our conversation so far:\n${updatedContext}\n\nPlease respond as Max. You can respond to both the user and Leo's message. Keep it funny and engaging while being helpful.`,
+              `Live information context: ${liveInfo}`
+            )
+          : `Here's our conversation so far:\n${updatedContext}\n\nPlease respond as Max. You can respond to both the user and Leo's message. Keep it funny and engaging while being helpful.`;
+
         const maxResponse = await callGroqAPI(
-          `Here's our conversation so far:\n${updatedContext}\n\nPlease respond as Max. You can respond to both the user and Leo's message. Keep it funny and engaging while being helpful.`,
+          maxEnhancedPrompt,
           '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',
           'Max'
         );

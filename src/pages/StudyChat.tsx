@@ -6,6 +6,7 @@ import UserButton from '../components/UserButton';
 import ConversationHistory from '../components/ConversationHistory';
 import { useAuth } from '../contexts/HybridAuthContext';
 import { saveChatMessage, getConversationMessages, createConversation } from '../lib/database';
+import { callSearchAPI, needsLiveInfo, enhancePromptWithSearch } from '../lib/searchAPI';
 
 interface Message {
   id: string;
@@ -146,8 +147,25 @@ const StudyChat = () => {
     ).join('\n') + `\nStudent: ${userMessage.content}`;
 
     try {
+      // Check if the query needs live information
+      let liveInfo = '';
+      if (needsLiveInfo(userMessage.content)) {
+        try {
+          liveInfo = await callSearchAPI(userMessage.content);
+        } catch (error) {
+          console.error('Error getting live info:', error);
+        }
+      }
+
+      const tutor1EnhancedPrompt = liveInfo 
+        ? enhancePromptWithSearch(
+            `Learning context:\n${conversationContext}\n\nPlease provide educational support as Tutor1. Focus on clear explanations and structured learning.`,
+            `Live information context: ${liveInfo}`
+          )
+        : `Learning context:\n${conversationContext}\n\nPlease provide educational support as Tutor1. Focus on clear explanations and structured learning.`;
+
       const tutor1Response = await callGroqAPI(
-        `Learning context:\n${conversationContext}\n\nPlease provide educational support as Tutor1. Focus on clear explanations and structured learning.`,
+        tutor1EnhancedPrompt,
         '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',
         'Tutor1'
       );
@@ -165,8 +183,15 @@ const StudyChat = () => {
       setTimeout(async () => {
         const updatedContext = conversationContext + `\nTutor1: ${tutor1Response}`;
         
+        const tutor2EnhancedPrompt = liveInfo 
+          ? enhancePromptWithSearch(
+              `Learning context:\n${updatedContext}\n\nPlease provide additional educational support as Tutor2. You can build on Tutor1's explanation with engaging examples and connections.`,
+              `Live information context: ${liveInfo}`
+            )
+          : `Learning context:\n${updatedContext}\n\nPlease provide additional educational support as Tutor2. You can build on Tutor1's explanation with engaging examples and connections.`;
+
         const tutor2Response = await callGroqAPI(
-          `Learning context:\n${updatedContext}\n\nPlease provide additional educational support as Tutor2. You can build on Tutor1's explanation with engaging examples and connections.`,
+          tutor2EnhancedPrompt,
           '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',
           'Tutor2'
         );
