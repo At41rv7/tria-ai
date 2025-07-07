@@ -60,7 +60,13 @@ const StudyChat = () => {
   };
 
   const handleNewChat = async () => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      // For non-logged users, just clear the current conversation
+      setCurrentConversationId('');
+      setMessages([]);
+      setShowHistory(false);
+      return;
+    }
     
     try {
       const conversation = await createConversation(
@@ -123,9 +129,14 @@ const StudyChat = () => {
 
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
-    if (!currentUser) return;
 
-    if (!currentConversationId) {
+    // For non-logged users, create a temporary conversation ID if none exists
+    if (!currentUser && !currentConversationId) {
+      setCurrentConversationId('temp-' + Date.now());
+    }
+
+    // For logged users, create new conversation if none exists
+    if (currentUser && !currentConversationId) {
       await handleNewChat();
       return;
     }
@@ -138,7 +149,9 @@ const StudyChat = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    await saveMessage('user', userMessage.content);
+    if (currentUser) {
+      await saveMessage('user', userMessage.content);
+    }
     setInput('');
     setIsLoading(true);
 
@@ -147,25 +160,28 @@ const StudyChat = () => {
     ).join('\n') + `\nStudent: ${userMessage.content}`;
 
     try {
-      // Check if the query needs live information
+      // Check if the current user message needs live information
       let liveInfo = '';
       if (needsLiveInfo(userMessage.content)) {
+        console.log('🔍 Detecting live info needed for study:', userMessage.content);
         try {
           liveInfo = await callSearchAPI(userMessage.content);
+          console.log('✅ Live info retrieved for study:', liveInfo.substring(0, 100) + '...');
         } catch (error) {
-          console.error('Error getting live info:', error);
+          console.error('❌ Error getting live info for study:', error);
         }
       }
 
-      const tutor1EnhancedPrompt = liveInfo 
+      // Tutor1's response with live info if available
+      const tutor1Prompt = liveInfo 
         ? enhancePromptWithSearch(
             `Learning context:\n${conversationContext}\n\nPlease provide educational support as Tutor1. Focus on clear explanations and structured learning.`,
-            `Live information context: ${liveInfo}`
+            liveInfo
           )
         : `Learning context:\n${conversationContext}\n\nPlease provide educational support as Tutor1. Focus on clear explanations and structured learning.`;
 
       const tutor1Response = await callGroqAPI(
-        tutor1EnhancedPrompt,
+        tutor1Prompt,
         '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',
         'Tutor1'
       );
@@ -178,20 +194,24 @@ const StudyChat = () => {
       };
 
       setMessages(prev => [...prev, tutor1Message]);
-      await saveMessage('tutor1', tutor1Message.content);
+      if (currentUser) {
+        await saveMessage('tutor1', tutor1Message.content);
+      }
 
+      // Tutor2's response after a delay
       setTimeout(async () => {
         const updatedContext = conversationContext + `\nTutor1: ${tutor1Response}`;
         
-        const tutor2EnhancedPrompt = liveInfo 
+        // Tutor2 also gets the live info if it was retrieved
+        const tutor2Prompt = liveInfo 
           ? enhancePromptWithSearch(
               `Learning context:\n${updatedContext}\n\nPlease provide additional educational support as Tutor2. You can build on Tutor1's explanation with engaging examples and connections.`,
-              `Live information context: ${liveInfo}`
+              liveInfo
             )
           : `Learning context:\n${updatedContext}\n\nPlease provide additional educational support as Tutor2. You can build on Tutor1's explanation with engaging examples and connections.`;
 
         const tutor2Response = await callGroqAPI(
-          tutor2EnhancedPrompt,
+          tutor2Prompt,
           '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',
           'Tutor2'
         );
@@ -204,7 +224,9 @@ const StudyChat = () => {
         };
 
         setMessages(prev => [...prev, tutor2Message]);
-        await saveMessage('tutor2', tutor2Message.content);
+        if (currentUser) {
+          await saveMessage('tutor2', tutor2Message.content);
+        }
         setIsLoading(false);
       }, 1500);
 
@@ -242,8 +264,8 @@ const StudyChat = () => {
 
   return (
     <div className="h-screen bg-gradient-to-br from-blue-50 to-white flex">
-      {/* Sidebar for conversation history */}
-      {showHistory && (
+      {/* Sidebar for conversation history - only show if user is logged in */}
+      {showHistory && currentUser && (
         <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
           <div className="p-4 border-b border-gray-200">
             <h2 className="font-semibold text-gray-800">Study History</h2>
@@ -260,43 +282,45 @@ const StudyChat = () => {
 
       {/* Main chat area */}
       <div className="flex-1 flex flex-col">
-        <div className="bg-white/90 backdrop-blur-sm shadow-lg border-b border-gray-200 p-4">
+        <div className="bg-white/90 backdrop-blur-sm shadow-lg border-b border-gray-200 p-3 sm:p-4">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <Link 
                 to="/chat-selector" 
                 className="flex items-center text-gray-600 hover:text-gray-800 transition-all duration-200 hover:scale-105"
               >
-                <ArrowLeft size={20} className="mr-2" />
-                <span className="font-medium hidden sm:inline">Back to Chat Options</span>
-                <Home size={20} className="sm:hidden" />
+                <ArrowLeft size={18} className="mr-1 sm:mr-2" />
+                <span className="font-medium text-sm hidden sm:inline">Back to Chat Options</span>
+                <Home size={18} className="sm:hidden" />
               </Link>
               
-              <button
-                onClick={() => setShowHistory(!showHistory)}
-                className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                <MessageCircle size={20} className="mr-2" />
-                <span className="hidden sm:inline">History</span>
-              </button>
+              {currentUser && (
+                <button
+                  onClick={() => setShowHistory(!showHistory)}
+                  className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  <MessageCircle size={18} className="mr-1 sm:mr-2" />
+                  <span className="text-sm hidden sm:inline">History</span>
+                </button>
+              )}
               
               <button
                 onClick={handleNewChat}
                 className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
               >
-                <Plus size={20} className="mr-2" />
-                <span className="hidden sm:inline">New Study</span>
+                <Plus size={18} className="mr-1 sm:mr-2" />
+                <span className="text-sm hidden sm:inline">New Study</span>
               </button>
             </div>
             
             <div className="text-center">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
+              <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-800">
                 Study Mode
               </h1>
-              <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">AI-Powered Learning Experience</p>
+              <p className="text-xs text-gray-600 hidden sm:block">AI-Powered Learning Experience</p>
             </div>
             
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 sm:space-x-3">
               <ModelSelector 
                 selectedModel={selectedModel}
                 onModelChange={setSelectedModel}
@@ -307,33 +331,37 @@ const StudyChat = () => {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-          <div className="max-w-5xl mx-auto space-y-6">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+          <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
             {messages.length === 0 && (
-              <div className="text-center py-8 sm:py-16">
-                <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 sm:p-12 shadow-xl border border-gray-200 max-w-2xl mx-auto">
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <Brain className="text-white" size={32} />
+              <div className="text-center py-6 sm:py-16">
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-12 shadow-xl border border-gray-200 max-w-2xl mx-auto">
+                  <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <Brain className="text-white" size={24} />
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">Welcome to Study Mode!</h3>
-                  <p className="text-gray-600 mb-8 max-w-md mx-auto text-sm sm:text-base">
+                  <h3 className="text-lg sm:text-2xl font-bold text-gray-800 mb-2">Welcome to Study Mode!</h3>
+                  <p className="text-gray-600 mb-6 sm:mb-8 max-w-md mx-auto text-sm sm:text-base px-2">
                     Ask any question and our AI tutors will work together to help you understand and learn effectively.
-                    {currentUser && <span className="block mt-2 text-green-600">✓ Your study sessions will be saved</span>}
+                    {currentUser ? (
+                      <span className="block mt-2 text-green-600">✓ Your study sessions will be saved</span>
+                    ) : (
+                      <span className="block mt-2 text-blue-600">💡 Sign in to save your study sessions</span>
+                    )}
                   </p>
                   
-                  <div className="flex flex-col sm:flex-row justify-center items-center space-y-6 sm:space-y-0 sm:space-x-12">
+                  <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-12">
                     <div className="text-center group">
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform shadow-lg">
-                        <User className="text-white" size={24} />
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform shadow-lg">
+                        <User className="text-white" size={20} />
                       </div>
-                      <p className="text-lg font-semibold text-gray-700">Structured Tutor</p>
+                      <p className="text-base sm:text-lg font-semibold text-gray-700">Structured Tutor</p>
                       <p className="text-xs sm:text-sm text-gray-500">Clear & Organized</p>
                     </div>
                     <div className="text-center group">
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform shadow-lg">
-                        <User className="text-white" size={24} />
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform shadow-lg">
+                        <User className="text-white" size={20} />
                       </div>
-                      <p className="text-lg font-semibold text-gray-700">Creative Tutor</p>
+                      <p className="text-base sm:text-lg font-semibold text-gray-700">Creative Tutor</p>
                       <p className="text-xs sm:text-sm text-gray-500">Engaging & Fun</p>
                     </div>
                   </div>
@@ -346,31 +374,31 @@ const StudyChat = () => {
                 key={message.id}
                 className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
               >
-                <div className={`max-w-[85%] sm:max-w-[75%] rounded-3xl p-4 sm:p-6 ${getSenderColor(message.sender)} backdrop-blur-sm`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-                      <User className="text-white" size={16} />
+                <div className={`max-w-[90%] sm:max-w-[85%] md:max-w-[75%] rounded-2xl sm:rounded-3xl p-3 sm:p-6 ${getSenderColor(message.sender)} backdrop-blur-sm`}>
+                  <div className="flex items-center space-x-2 sm:space-x-3 mb-2 sm:mb-3">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                      <User className="text-white" size={12} />
                     </div>
-                    <span className="font-semibold text-sm">{getSenderName(message.sender)}</span>
+                    <span className="font-semibold text-xs sm:text-sm">{getSenderName(message.sender)}</span>
                     <span className="text-xs opacity-70">
                       {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
-                  <p className="text-sm leading-relaxed">{message.content}</p>
+                  <p className="text-xs sm:text-sm leading-relaxed">{message.content}</p>
                 </div>
               </div>
             ))}
 
             {isLoading && (
               <div className="flex justify-start animate-fade-in">
-                <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 max-w-[75%] shadow-lg border border-gray-200">
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-[75%] shadow-lg border border-gray-200">
                   <div className="flex items-center space-x-3">
                     <div className="flex space-x-1">
                       <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-100"></div>
                       <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-200"></div>
                     </div>
-                    <span className="text-sm text-gray-600 font-medium">Tutors are thinking...</span>
+                    <span className="text-xs sm:text-sm text-gray-600 font-medium">Tutors are thinking...</span>
                   </div>
                 </div>
               </div>
@@ -381,24 +409,24 @@ const StudyChat = () => {
         </div>
 
         {/* Input */}
-        <div className="bg-white/90 backdrop-blur-sm border-t border-gray-200 p-4 sm:p-6">
+        <div className="bg-white/90 backdrop-blur-sm border-t border-gray-200 p-3 sm:p-6">
           <div className="max-w-5xl mx-auto">
-            <div className="flex space-x-3 sm:space-x-4">
+            <div className="flex space-x-2 sm:space-x-4">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Ask your tutors anything you want to learn..."
-                className="flex-1 px-4 sm:px-6 py-3 sm:py-4 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-lg placeholder-gray-500 text-sm sm:text-base"
+                className="flex-1 px-3 sm:px-6 py-2.5 sm:py-4 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-lg placeholder-gray-500 text-sm sm:text-base"
                 disabled={isLoading}
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!input.trim() || isLoading}
-                className="px-6 sm:px-8 py-3 sm:py-4 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2 shadow-lg hover:scale-105"
+                className="px-4 sm:px-8 py-2.5 sm:py-4 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2 shadow-lg hover:scale-105"
               >
-                <Send size={18} />
+                <Send size={16} />
               </button>
             </div>
           </div>

@@ -160,25 +160,28 @@ const Chat = () => {
     ).join('\n') + `\nUser: ${userMessage.content}`;
 
     try {
-      // Check if the query needs live information
+      // Check if the current user message needs live information
       let liveInfo = '';
       if (needsLiveInfo(userMessage.content)) {
+        console.log('🔍 Detecting live info needed for:', userMessage.content);
         try {
           liveInfo = await callSearchAPI(userMessage.content);
+          console.log('✅ Live info retrieved:', liveInfo.substring(0, 100) + '...');
         } catch (error) {
-          console.error('Error getting live info:', error);
+          console.error('❌ Error getting live info:', error);
         }
       }
 
-      const enhancedPrompt = liveInfo 
+      // Leo's response with live info if available
+      const leoPrompt = liveInfo 
         ? enhancePromptWithSearch(
             `Here's our conversation so far:\n${conversationContext}\n\nPlease respond as Leo. Keep it conversational and engaging.`,
-            `Live information context: ${liveInfo}`
+            liveInfo
           )
         : `Here's our conversation so far:\n${conversationContext}\n\nPlease respond as Leo. Keep it conversational and engaging.`;
 
       const leoResponse = await callGroqAPI(
-        enhancedPrompt,
+        leoPrompt,
         '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',
         'Leo'
       );
@@ -195,18 +198,20 @@ const Chat = () => {
         await saveMessage('leo', leoMessage.content);
       }
 
+      // Max's response after a delay
       setTimeout(async () => {
         const updatedContext = conversationContext + `\nLeo: ${leoResponse}`;
         
-        const maxEnhancedPrompt = liveInfo 
+        // Max also gets the live info if it was retrieved
+        const maxPrompt = liveInfo 
           ? enhancePromptWithSearch(
               `Here's our conversation so far:\n${updatedContext}\n\nPlease respond as Max. You can respond to both the user and Leo's message. Keep it funny and engaging while being helpful.`,
-              `Live information context: ${liveInfo}`
+              liveInfo
             )
           : `Here's our conversation so far:\n${updatedContext}\n\nPlease respond as Max. You can respond to both the user and Leo's message. Keep it funny and engaging while being helpful.`;
 
         const maxResponse = await callGroqAPI(
-          maxEnhancedPrompt,
+          maxPrompt,
           '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',
           'Max'
         );
@@ -277,16 +282,16 @@ const Chat = () => {
 
       {/* Main chat area */}
       <div className="flex-1 flex flex-col">
-        <div className="bg-white/90 backdrop-blur-sm shadow-lg border-b border-gray-200 p-4">
+        <div className="bg-white/90 backdrop-blur-sm shadow-lg border-b border-gray-200 p-3 sm:p-4">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <Link 
                 to="/" 
                 className="flex items-center text-gray-600 hover:text-gray-800 transition-all duration-200 hover:scale-105"
               >
-                <ArrowLeft size={20} className="mr-2" />
-                <span className="font-medium hidden sm:inline">Back to Home</span>
-                <Home size={20} className="sm:hidden" />
+                <ArrowLeft size={18} className="mr-1 sm:mr-2" />
+                <span className="font-medium text-sm hidden sm:inline">Back to Home</span>
+                <Home size={18} className="sm:hidden" />
               </Link>
               
               {currentUser && (
@@ -294,8 +299,8 @@ const Chat = () => {
                   onClick={() => setShowHistory(!showHistory)}
                   className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
                 >
-                  <MessageCircle size={20} className="mr-2" />
-                  <span className="hidden sm:inline">History</span>
+                  <MessageCircle size={18} className="mr-1 sm:mr-2" />
+                  <span className="text-sm hidden sm:inline">History</span>
                 </button>
               )}
               
@@ -303,19 +308,19 @@ const Chat = () => {
                 onClick={handleNewChat}
                 className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
               >
-                <Plus size={20} className="mr-2" />
-                <span className="hidden sm:inline">New Chat</span>
+                <Plus size={18} className="mr-1 sm:mr-2" />
+                <span className="text-sm hidden sm:inline">New Chat</span>
               </button>
             </div>
             
             <div className="text-center">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
+              <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-800">
                 Tria Chat
               </h1>
-              <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">AI Conversation Experience</p>
+              <p className="text-xs text-gray-600 hidden sm:block">AI Conversation Experience</p>
             </div>
             
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 sm:space-x-3">
               <ModelSelector 
                 selectedModel={selectedModel}
                 onModelChange={setSelectedModel}
@@ -326,17 +331,17 @@ const Chat = () => {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-          <div className="max-w-5xl mx-auto space-y-6">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+          <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
             {messages.length === 0 && (
-              <div className="text-center py-8 sm:py-16">
-                <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 sm:p-12 shadow-xl border border-gray-200 max-w-2xl mx-auto">
-                  <div className="mb-8">
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-r from-gray-600 to-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <User className="text-white" size={32} />
+              <div className="text-center py-6 sm:py-16">
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-12 shadow-xl border border-gray-200 max-w-2xl mx-auto">
+                  <div className="mb-6 sm:mb-8">
+                    <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-r from-gray-600 to-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <User className="text-white" size={24} />
                     </div>
-                    <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">Welcome to Tria AI!</h3>
-                    <p className="text-gray-600 mb-8 max-w-md mx-auto text-sm sm:text-base">
+                    <h3 className="text-lg sm:text-2xl font-bold text-gray-800 mb-2">Welcome to Tria AI!</h3>
+                    <p className="text-gray-600 mb-6 sm:mb-8 max-w-md mx-auto text-sm sm:text-base px-2">
                       Start a conversation with Leo and Max. They'll both respond and interact with each other too!
                       {currentUser ? (
                         <span className="block mt-2 text-green-600">✓ Your chat history will be saved</span>
@@ -346,19 +351,19 @@ const Chat = () => {
                     </p>
                   </div>
                   
-                  <div className="flex flex-col sm:flex-row justify-center items-center space-y-6 sm:space-y-0 sm:space-x-12">
+                  <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-12">
                     <div className="text-center group">
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-r from-gray-600 to-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform shadow-lg">
-                        <User className="text-white" size={24} />
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-gray-600 to-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform shadow-lg">
+                        <User className="text-white" size={20} />
                       </div>
-                      <p className="text-lg font-semibold text-gray-700">Leo</p>
+                      <p className="text-base sm:text-lg font-semibold text-gray-700">Leo</p>
                       <p className="text-xs sm:text-sm text-gray-500">Dedicated & Intelligent</p>
                     </div>
                     <div className="text-center group">
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-r from-gray-500 to-gray-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform shadow-lg">
-                        <User className="text-white" size={24} />
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-gray-500 to-gray-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform shadow-lg">
+                        <User className="text-white" size={20} />
                       </div>
-                      <p className="text-lg font-semibold text-gray-700">Max</p>
+                      <p className="text-base sm:text-lg font-semibold text-gray-700">Max</p>
                       <p className="text-xs sm:text-sm text-gray-500">Funny & Witty</p>
                     </div>
                   </div>
@@ -371,31 +376,31 @@ const Chat = () => {
                 key={message.id}
                 className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
               >
-                <div className={`max-w-[85%] sm:max-w-[75%] rounded-3xl p-4 sm:p-6 ${getSenderColor(message.sender)} backdrop-blur-sm`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-                      <User className="text-white" size={16} />
+                <div className={`max-w-[90%] sm:max-w-[85%] md:max-w-[75%] rounded-2xl sm:rounded-3xl p-3 sm:p-6 ${getSenderColor(message.sender)} backdrop-blur-sm`}>
+                  <div className="flex items-center space-x-2 sm:space-x-3 mb-2 sm:mb-3">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                      <User className="text-white" size={12} />
                     </div>
-                    <span className="font-semibold text-sm">{getSenderName(message.sender)}</span>
+                    <span className="font-semibold text-xs sm:text-sm">{getSenderName(message.sender)}</span>
                     <span className="text-xs opacity-70">
                       {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
-                  <p className="text-sm leading-relaxed">{message.content}</p>
+                  <p className="text-xs sm:text-sm leading-relaxed">{message.content}</p>
                 </div>
               </div>
             ))}
 
             {isLoading && (
               <div className="flex justify-start animate-fade-in">
-                <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 max-w-[75%] shadow-lg border border-gray-200">
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-[75%] shadow-lg border border-gray-200">
                   <div className="flex items-center space-x-3">
                     <div className="flex space-x-1">
                       <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-100"></div>
                       <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-200"></div>
                     </div>
-                    <span className="text-sm text-gray-600 font-medium">Leo and Max are thinking...</span>
+                    <span className="text-xs sm:text-sm text-gray-600 font-medium">Leo and Max are thinking...</span>
                   </div>
                 </div>
               </div>
@@ -406,24 +411,24 @@ const Chat = () => {
         </div>
 
         {/* Input */}
-        <div className="bg-white/90 backdrop-blur-sm border-t border-gray-200 p-4 sm:p-6">
+        <div className="bg-white/90 backdrop-blur-sm border-t border-gray-200 p-3 sm:p-6">
           <div className="max-w-5xl mx-auto">
-            <div className="flex space-x-3 sm:space-x-4">
+            <div className="flex space-x-2 sm:space-x-4">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Type your message to Leo and Max..."
-                className="flex-1 px-4 sm:px-6 py-3 sm:py-4 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent bg-white shadow-lg placeholder-gray-500 text-sm sm:text-base"
+                className="flex-1 px-3 sm:px-6 py-2.5 sm:py-4 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent bg-white shadow-lg placeholder-gray-500 text-sm sm:text-base"
                 disabled={isLoading}
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!input.trim() || isLoading}
-                className="px-6 sm:px-8 py-3 sm:py-4 bg-gray-800 text-white rounded-full hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2 shadow-lg hover:scale-105"
+                className="px-4 sm:px-8 py-2.5 sm:py-4 bg-gray-800 text-white rounded-full hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2 shadow-lg hover:scale-105"
               >
-                <Send size={18} />
+                <Send size={16} />
               </button>
             </div>
           </div>
