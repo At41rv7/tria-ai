@@ -161,7 +161,7 @@ const Chat = () => {
     try {
       const leoResponse = await callGroqAPI(
         `Here's our conversation so far:\n${conversationContext}\n\nPlease respond as Leo. Keep it conversational and engaging.`,
-        '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',
+        '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',
         'Leo'
       );
 
@@ -182,7 +182,7 @@ const Chat = () => {
         
         const maxResponse = await callGroqAPI(
           `Here's our conversation so far:\n${updatedContext}\n\nPlease respond as Max. You can respond to both the user and Leo's message. Keep it funny and engaging while being helpful.`,
-          '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',
+          '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',
           'Max'
         );
 
