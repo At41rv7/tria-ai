@@ -331,16 +331,16 @@ const StudyChat = () => {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+        <div className="flex-1 overflow-y-auto p-2 sm:p-3 lg:p-6 overscroll-behavior-contain">
           <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
             {messages.length === 0 && (
-              <div className="text-center py-6 sm:py-16">
+              <div className="text-center py-4 sm:py-8 lg:py-16">
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-12 shadow-xl border border-gray-200 max-w-2xl mx-auto">
-                  <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <Brain className="text-white" size={24} />
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-24 lg:h-24 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg">
+                    <Brain className="text-white" size={20} />
                   </div>
-                  <h3 className="text-lg sm:text-2xl font-bold text-gray-800 mb-2">Welcome to Study Mode!</h3>
-                  <p className="text-gray-600 mb-6 sm:mb-8 max-w-md mx-auto text-sm sm:text-base px-2">
+                  <h3 className="text-base sm:text-lg lg:text-2xl font-bold text-gray-800 mb-2">Welcome to Study Mode!</h3>
+                  <p className="text-gray-600 mb-4 sm:mb-6 lg:mb-8 max-w-md mx-auto text-xs sm:text-sm lg:text-base px-2">
                     Ask any question and our AI tutors will work together to help you understand and learn effectively.
                     {currentUser ? (
                       <span className="block mt-2 text-green-600">✓ Your study sessions will be saved</span>
@@ -351,17 +351,17 @@ const StudyChat = () => {
                   
                   <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-12">
                     <div className="text-center group">
-                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform shadow-lg">
-                        <User className="text-white" size={20} />
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-3 group-hover:scale-110 transition-transform shadow-lg">
+                        <User className="text-white" size={16} />
                       </div>
-                      <p className="text-base sm:text-lg font-semibold text-gray-700">Structured Tutor</p>
+                      <p className="text-sm sm:text-base lg:text-lg font-semibold text-gray-700">Structured Tutor</p>
                       <p className="text-xs sm:text-sm text-gray-500">Clear & Organized</p>
                     </div>
                     <div className="text-center group">
-                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform shadow-lg">
-                        <User className="text-white" size={20} />
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-3 group-hover:scale-110 transition-transform shadow-lg">
+                        <User className="text-white" size={16} />
                       </div>
-                      <p className="text-base sm:text-lg font-semibold text-gray-700">Creative Tutor</p>
+                      <p className="text-sm sm:text-base lg:text-lg font-semibold text-gray-700">Creative Tutor</p>
                       <p className="text-xs sm:text-sm text-gray-500">Engaging & Fun</p>
                     </div>
                   </div>
@@ -372,27 +372,27 @@ const StudyChat = () => {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
+                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in px-1 sm:px-0`}
               >
-                <div className={`max-w-[90%] sm:max-w-[85%] md:max-w-[75%] rounded-2xl sm:rounded-3xl p-3 sm:p-6 ${getSenderColor(message.sender)} backdrop-blur-sm`}>
-                  <div className="flex items-center space-x-2 sm:space-x-3 mb-2 sm:mb-3">
-                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-600 rounded-full flex items-center justify-center">
-                      <User className="text-white" size={12} />
+                <div className={`max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[75%] rounded-xl sm:rounded-2xl lg:rounded-3xl p-2 sm:p-4 lg:p-6 ${getSenderColor(message.sender)} backdrop-blur-sm`}>
+                  <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3 mb-1 sm:mb-2 lg:mb-3">
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                      <User className="text-white" size={10} />
                     </div>
-                    <span className="font-semibold text-xs sm:text-sm">{getSenderName(message.sender)}</span>
-                    <span className="text-xs opacity-70">
+                    <span className="font-semibold text-xs sm:text-sm lg:text-base">{getSenderName(message.sender)}</span>
+                    <span className="text-xs sm:text-sm opacity-70">
                       {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
-                  <p className="text-xs sm:text-sm leading-relaxed">{message.content}</p>
+                  <p className="text-xs sm:text-sm lg:text-base leading-relaxed break-words">{message.content}</p>
                 </div>
               </div>
             ))}
 
             {isLoading && (
               <div className="flex justify-start animate-fade-in">
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-[75%] shadow-lg border border-gray-200">
-                  <div className="flex items-center space-x-3">
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 max-w-[85%] sm:max-w-[75%] shadow-lg border border-gray-200 mx-1 sm:mx-0">
+                  <div className="flex items-center space-x-2 sm:space-x-3">
                     <div className="flex space-x-1">
                       <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-100"></div>
@@ -409,24 +409,24 @@ const StudyChat = () => {
         </div>
 
         {/* Input */}
-        <div className="bg-white/90 backdrop-blur-sm border-t border-gray-200 p-3 sm:p-6">
+        <div className="bg-white/90 backdrop-blur-sm border-t border-gray-200 p-2 sm:p-4 lg:p-6 safe-area-inset-bottom">
           <div className="max-w-5xl mx-auto">
-            <div className="flex space-x-2 sm:space-x-4">
+            <div className="flex space-x-2 sm:space-x-3 lg:space-x-4">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Ask your tutors anything you want to learn..."
-                className="flex-1 px-3 sm:px-6 py-2.5 sm:py-4 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-lg placeholder-gray-500 text-sm sm:text-base"
+                className="flex-1 px-3 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-lg placeholder-gray-500 text-sm sm:text-base resize-none"
                 disabled={isLoading}
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!input.trim() || isLoading}
-                className="px-4 sm:px-8 py-2.5 sm:py-4 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2 shadow-lg hover:scale-105"
+                className="px-3 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center shadow-lg hover:scale-105 min-w-[44px] sm:min-w-[48px]"
               >
-                <Send size={16} />
+                <Send size={14} className="sm:w-4 sm:h-4" />
               </button>
             </div>
           </div>
